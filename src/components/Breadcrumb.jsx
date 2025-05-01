@@ -4,7 +4,7 @@ import { ChevronRight } from "lucide-react";
 
 const Breadcrumb = ({ items }) => {
   return (
-    <div className="flex items-center text-sm font-medium mb-4">
+    <div className="flex items-center text-sm font-medium ">
       <Link to="/" className="text-indigo-600 hover:text-indigo-800 hover:underline">
         Home
       </Link>

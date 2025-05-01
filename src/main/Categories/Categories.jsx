@@ -1,185 +1,186 @@
 import React, { useEffect, useState } from "react";
-import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiImage } from "react-icons/fi";
+import { FiPlus, FiEdit2, FiTrash2, FiImage } from "react-icons/fi";
 import AddCategoryModal from "./Models/AddCategoryModal";
 import { Get_category } from "../../controllers/Network/Featcher";
 import { useDispatch, useSelector } from "react-redux";
 import { set_Category } from "../../store/counterSlice";
 import Breadcrumb from "../../components/Breadcrumb";
 import EditCategoryModel from "./Models/EditCategoryModel";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 
 export default function Categories() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isModelEditOpen, setisModelEditOpen] = useState(false);
-const [CategryToedit, setCategryToedit] = useState({})
-
-  const dispacher = useDispatch();
-  const Categoryredux = useSelector((state) => state.counter.Category);
-  // Sample data with image URLs
+  const [isModelEditOpen, setIsModelEditOpen] = useState(false);
+  const [categoryToEdit, setCategoryToEdit] = useState({});
+  const [loading, setLoading] = useState(true);
+  
+  const dispatch = useDispatch();
+  const categories = useSelector((state) => state.counter.Category);
 
   const loadData = () => {
+    setLoading(true);
     Get_category()
       .then((res) => {
-        console.log(res.data);
-        dispacher(set_Category(res.data.category));
+        dispatch(set_Category(res.data.category));
       })
-      .catch((err) => {
-        console.log(err);
-      });
+      .catch(console.error)
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => {
-    if (Categoryredux.length == 0) {
+    if (categories.length === 0) {
       loadData();
+    } else {
+      setLoading(false);
     }
   }, []);
 
   return (
-    <div className="p-6  ">
-      <Breadcrumb
-        items={[
-          { label: "Category", href: null }, // Current page (no link)
-        ]}
-      />
-      <AddCategoryModal
-        isOpen={isModalOpen}
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <Breadcrumb items={[{ label: "Categories", href: null }]} />
+      
+      <AddCategoryModal 
+        isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)}
+        onSuccess={loadData}
       />
-      {
-        isModelEditOpen&& <EditCategoryModel
-        CategryToedit={CategryToedit}
+      
+      {isModelEditOpen && (
+        <EditCategoryModel
+          categoryToEdit={categoryToEdit}
           isOpen={isModelEditOpen}
-          onClose={() => setisModelEditOpen(false)}
+          onClose={() => setIsModelEditOpen(false)}
+          onSuccess={loadData}
         />
-      }
-     
+      )}
 
-      <div className=" mx-auto">
-        {/* Header with gradient */}
+      <div className="max-w-7xl mx-auto">
+        {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800 mb-1">
-              Categories
-            </h1>
-            <p className="text-gray-500">Manage your product categories</p>
+            <h1 className="text-2xl font-bold text-gray-800 mt-3">Categories</h1>
+            <p className="text-gray-500 mt-1">Manage your product categories</p>
           </div>
-
-          {/* Search and Add Button */}
-          <div className="flex flex-col sm:flex-row gap-4 mt-4 md:mt-0">
-            <div className="relative">
-              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search categories..."
-                className="pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent w-full sm:w-64 bg-white shadow-sm"
-              />
-            </div>
-
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="flex items-center justify-center bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-5 py-2.5 rounded-xl transition-all shadow-md hover:shadow-lg"
-            >
-              <FiPlus className="mr-2" />
-              Add Category
-            </button>
-          </div>
+          
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg shadow transition-colors mt-4 md:mt-0"
+          >
+            <FiPlus className="mr-2" />
+            Add Category
+          </button>
         </div>
 
-        {/* Categories Card Table */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th
-                    scope="col"
-                    className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Category
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Products
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Status
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {Categoryredux.map((category) => (
-                  <tr
-                    key={category.id}
-                    className="hover:bg-gray-50/50 transition-colors"
-                  >
-                    <td className="px-8 py-5 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 h-12 w-12 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
-                          {category.image ? (
-                            <img
-                              className="h-full w-full object-cover"
-                              src={category.image}
-                              alt={category.name}
-                            />
-                          ) : (
-                            <FiImage className="h-6 w-6 text-gray-400" />
-                          )}
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-semibold text-gray-900">
-                            {category.name}
-                          </div>
-                          <div className="text-xs text-gray-400">
-                            ID: {category._id}
-                          </div>
-                        </div>
+        {/* Categories Card */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          {loading ? (
+            <div className="p-6">
+              <div className="space-y-4">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="flex items-center justify-between p-4 border-b border-gray-100">
+                    <div className="flex items-center">
+                      <Skeleton circle width={48} height={48} className="mr-4" />
+                      <div>
+                        <Skeleton width={150} height={20} />
+                        <Skeleton width={100} height={16} className="mt-1" />
                       </div>
-                    </td>
-                    <td className="px-6 py-5 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {category.slug}
-                      </div>
-                      <div className="text-xs text-gray-400">products</div>
-                    </td>
-                    <td className="px-6 py-5 whitespace-nowrap">
-                      <span
-                        className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                         bg-gray-100 text-gray-700"
-                        }`}
-                      >
-                        {new Date(category.updatedAt).toLocaleString()}
-                      </span>
-                    </td>
-                    <td className="px-6 py-5 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex justify-end space-x-3">
-                        <button onClick={()=>{
-                          setCategryToedit(category)
-                          setisModelEditOpen(true)
-                        }} className="text-indigo-500 hover:text-indigo-700 p-2 rounded-lg hover:bg-indigo-50 transition-colors">
-                          <FiEdit2 className="h-4 w-4" />
-                        </button>
-                        <button className="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors">
-                          <FiTrash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                    </div>
+                    <div className="flex space-x-3">
+                      <Skeleton width={80} height={20} />
+                      <Skeleton width={80} height={20} />
+                      <Skeleton width={30} height={30} circle />
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Enhanced Pagination */}
+              </div>
+            </div>
+          ) : categories.length === 0 ? (
+            <div className="p-12 text-center">
+              <FiImage className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-2 text-lg font-medium text-gray-900">No categories found</h3>
+              <p className="mt-1 text-gray-500">Get started by creating a new category</p>
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="mt-6 inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+              >
+                <FiPlus className="-ml-1 mr-2 h-5 w-5" />
+                Add Category
+              </button>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Category
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Slug
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Last Updated
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {categories.map((category) => (
+                    <tr key={category._id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0 h-10 w-10 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+                            {category.image ? (
+                              <img
+                                className="h-full w-full object-cover"
+                                src={category.image}
+                                alt={category.name}
+                              />
+                            ) : (
+                              <FiImage className="h-5 w-5 text-gray-400" />
+                            )}
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-semibold text-gray-900">
+                              {category.name}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              ID: {category._id}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 py-1 text-xs font-medium bg-indigo-100 text-indigo-800 rounded-full">
+                          {category.slug}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(category.updatedAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex justify-end space-x-2">
+                          <button
+                            onClick={() => {
+                              setCategoryToEdit(category);
+                              setIsModelEditOpen(true);
+                            }}
+                            className="text-indigo-600 hover:text-indigo-900 p-2 rounded-md hover:bg-indigo-50 transition-colors"
+                            title="Edit"
+                          >
+                            <FiEdit2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,10 +1,25 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import { IoMdSearch, IoMdLogOut } from "react-icons/io";
-import { IoNotificationsOutline } from "react-icons/io5";
 
-export default function Header() {
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { 
+  FiSearch, 
+  FiLogOut, 
+  FiMenu,
+  FiBell,
+  FiChevronDown
+} from "react-icons/fi";
+import { 
+  RiDashboardLine,
+  RiShoppingBagLine
+} from "react-icons/ri";
+import { useDispatch, useSelector } from "react-redux";
+import { Get_category } from "../controllers/Network/Featcher";
+import { set_Category } from "../store/counterSlice";
+
+export default function Header({ toggleSidebar }) {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const Categoryredux = useSelector((state) => state.counter.Category);
 
   const handleLogout = () => {
     const result = confirm("Are you sure you want to log out?");
@@ -21,70 +36,98 @@ export default function Header() {
     }
   };
 
+  const loadData = () => {
+    Get_category()
+      .then((res) => {
+        dispatch(set_Category(res.data.category));
+      })
+      .catch(console.error);
+  };
+
+  useEffect(() => {
+    if (Categoryredux.length === 0) {
+      loadData();
+    }
+  }, []);
+
   return (
-    <nav className="col-span-2 flex justify-between bg-indigo-700 items-center shadow-sm text-white px-4 ">
-      {/* Left Side - Branding */}
-      <div className="flex items-center space-x-3">
-        <h1 className="text-xl font-semibold flex items-center">
-          <span className="bg-white text-indigo-700 px-2 py-0.5 rounded-md mr-1.5 text-sm">
-            PG
-          </span>
-          <span className="hidden sm:inline">Ecommerce</span>
-        </h1>
-      </div>
-
-      {/* Right Side - Navigation Items */}
-      <div className="flex items-center space-x-4">
-        {/* Search */}
-        <div className="relative hidden md:block">
-          <IoMdSearch
-            className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-indigo-200"
-            size={18}
-          />
-          <input
-            type="text"
-            placeholder="Search products..."
-            className="bg-indigo-600 text-white placeholder-indigo-300 rounded-full py-1.5 pl-8 pr-3  w-48 text-sm"
-          />
-        </div>
-
-        {/* Mobile Search */}
-        <button className="md:hidden p-1 text-indigo-100 hover:text-white">
-          <IoMdSearch size={20} />
-        </button>
-
-        {/* Notifications */}
-        <button className="relative p-1 text-indigo-100 hover:text-white">
-          <IoNotificationsOutline size={20} />
-          <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-red-400 rounded-full"></span>
-        </button>
-
-        {/* User Profile */}
-        <div className="flex items-center space-x-2">
+    <nav className="col-span-2 flex justify-between  bg-white border-b border-gray-200  px-8 ">
+        {/* Left Section */}
+        <div className="flex items-center space-x-4">
+          {/* Mobile Menu Button */}
+          <button 
+            onClick={toggleSidebar}
+            className="p-1 text-gray-500 hover:text-indigo-600 focus:outline-none lg:hidden"
+          >
+            <FiMenu size={20} />
+          </button>
+          
+          {/* Brand Logo */}
           <div className="flex items-center">
-            <div className="border border-white rounded-full">
-              <img
-                className="w-7 h-7 rounded-full object-cover"
-                src="https://laravelui.spruko.com/tailwind/ynex/build/assets/images/faces/9.jpg"
-                alt="Admin"
-              />
+            <div className="flex items-center justify-center w-8 h-8 rounded-md bg-indigo-600 text-white">
+              <RiShoppingBagLine size={18} />
             </div>
-            <div className="mr-2 text-left pl-2 hidden sm:block">
-              <p className="font-medium text-sm">@pg_admin</p>
-              <p className="text-xs text-indigo-200">Admin</p>
-            </div>
+            <span className="ml-2 text-lg font-semibold text-gray-800 hidden sm:inline">
+              Admin Panel
+            </span>
           </div>
         </div>
 
-        {/* Logout */}
-        <button
-          onClick={handleLogout}
-          className="p-1 text-indigo-100 hover:text-white hover:bg-indigo-600 rounded-full transition-colors"
-          title="Logout"
-        >
-          <IoMdLogOut size={20} />
-        </button>
-      </div>
+        {/* Right Section */}
+        <div className="flex items-center space-x-4">
+          {/* Search Bar */}
+          <div className="relative hidden md:block">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <FiSearch className="text-gray-400" size={18} />
+            </div>
+            <input
+              type="text"
+              placeholder="Search anything..."
+              className="block w-64 pl-10 pr-3 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm placeholder-gray-400 transition duration-150"
+            />
+          </div>
+
+          {/* Mobile Search Button */}
+          <button className="md:hidden p-1 text-gray-500 hover:text-indigo-600">
+            <FiSearch size={20} />
+          </button>
+
+          {/* Notifications */}
+          <div className="relative">
+            <button className="p-1 text-gray-500 hover:text-indigo-600 relative">
+              <FiBell size={20} />
+              <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+            </button>
+          </div>
+
+          {/* User Profile */}
+          <div className="flex items-center space-x-2 pl-2 border-l border-gray-200 ml-2">
+            <div className="relative">
+              <img
+                className="w-8 h-8 rounded-full object-cover border-2 border-indigo-100"
+                src="https://randomuser.me/api/portraits/women/44.jpg"
+                alt="Admin"
+              />
+              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 rounded-full border-2 border-white"></span>
+            </div>
+            <div className="hidden md:block text-left">
+              <p className="text-sm font-medium text-gray-800">Admin User</p>
+              <p className="text-xs text-gray-500">Super Admin</p>
+            </div>
+            <FiChevronDown className="text-gray-500 hidden md:block" />
+          </div>
+
+          {/* Logout Button */}
+          <button
+            onClick={handleLogout}
+            className="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-gray-100 rounded-full transition-colors"
+            title="Logout"
+          >
+            <FiLogOut size={18} />
+          </button>
+        </div>
+      
+    
     </nav>
   );
 }

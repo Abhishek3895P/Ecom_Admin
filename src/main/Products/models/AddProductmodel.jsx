@@ -2,11 +2,13 @@ import { useState, useRef } from "react";
 import { FiX, FiUpload, FiTrash2 } from "react-icons/fi";
 import { useDispatch, useSelector } from "react-redux";
 import { Post_product } from "../../../controllers/Network/Featcher";
-
+import Loading_svg from "../../../components/Loading_svg";
 export default function AddProductModal({ isOpen, onClose }) {
   const dispatch = useDispatch();
   const Categoryredux = useSelector((state) => state.counter.Category);
 
+  const [loading, setloading] = useState(false);
+const [errormsh, seterrormsh] = useState(null)
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -27,35 +29,35 @@ export default function AddProductModal({ isOpen, onClose }) {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
     const newImages = [...formData.images, ...files];
-    setFormData(prev => ({ ...prev, images: newImages }));
-    
+    setFormData((prev) => ({ ...prev, images: newImages }));
+
     // Create preview URLs
-    const newPreviews = files.map(file => URL.createObjectURL(file));
-    setPreviewImages(prev => [...prev, ...newPreviews]);
+    const newPreviews = files.map((file) => URL.createObjectURL(file));
+    setPreviewImages((prev) => [...prev, ...newPreviews]);
   };
 
   const removeImage = (index) => {
     const newImages = [...formData.images];
     const newPreviews = [...previewImages];
-    
+
     newImages.splice(index, 1);
     newPreviews.splice(index, 1);
-    
-    setFormData(prev => ({ ...prev, images: newImages }));
+
+    setFormData((prev) => ({ ...prev, images: newImages }));
     setPreviewImages(newPreviews);
-    
+
     // Revoke the object URL to avoid memory leaks
     URL.revokeObjectURL(previewImages[index]);
   };
 
   const addSpecification = () => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       specifications: [...prev.specifications, { key: "", value: "" }],
     }));
@@ -64,7 +66,7 @@ export default function AddProductModal({ isOpen, onClose }) {
   const removeSpecification = (index) => {
     const updatedSpecifications = [...formData.specifications];
     updatedSpecifications.splice(index, 1);
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       specifications: updatedSpecifications,
     }));
@@ -74,7 +76,7 @@ export default function AddProductModal({ isOpen, onClose }) {
     const { name, value } = e.target;
     const updatedSpecifications = [...formData.specifications];
     updatedSpecifications[index][name] = value;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       specifications: updatedSpecifications,
     }));
@@ -82,7 +84,8 @@ export default function AddProductModal({ isOpen, onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+    setloading(true);
+    seterrormsh(null)
     try {
       const formDataToSend = new FormData();
 
@@ -97,22 +100,29 @@ export default function AddProductModal({ isOpen, onClose }) {
         }
       });
 
-      console.log(formDataToSend)
+      console.log(formDataToSend);
 
       // Uncomment when you have your API function ready
       // const response = await Post_product(formDataToSend);
       // dispatch(set_Product(response.data.product));
 
+      Post_product(formDataToSend)
+        .then((res) => {
+          console.log(res);
+          if(res.data.success){
 
-      Post_product(formDataToSend).then(res=>{
-        console.log(res)
-      }).catch(err=>{
-        console.log(err)
-      })
+            setloading(false);
+            onClose()
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+          setloading(false);
+          seterrormsh("Opps, Something went Wrong.")
+        });
 
-      
-    //   resetForm();
-    //   onClose();
+      //   resetForm();
+      //   onClose();
     } catch (error) {
       console.error("Error adding product:", error);
       // Add error handling (e.g., show toast notification)
@@ -132,19 +142,22 @@ export default function AddProductModal({ isOpen, onClose }) {
       status: "active",
     });
     setPreviewImages([]);
-    
+
     // Revoke all object URLs
-    previewImages.forEach(url => URL.revokeObjectURL(url));
+    previewImages.forEach((url) => URL.revokeObjectURL(url));
   };
 
-  const isFormValid = formData.title && formData.category && formData.price ;
+  const isFormValid = formData.title && formData.category && formData.price;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
         {/* Modal Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-800">Add New Product</h2>
+          <h2 className="text-xl font-semibold text-gray-800">
+            Add New Product
+            {errormsh&&<p className="text-sm">{errormsh}</p>}
+          </h2>
           <button
             onClick={() => {
               resetForm();
@@ -160,7 +173,9 @@ export default function AddProductModal({ isOpen, onClose }) {
         <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
           {/* Title */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Product Title *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Product Title *
+            </label>
             <input
               type="text"
               name="title"
@@ -174,7 +189,9 @@ export default function AddProductModal({ isOpen, onClose }) {
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Description
+            </label>
             <textarea
               name="description"
               value={formData.description}
@@ -188,9 +205,13 @@ export default function AddProductModal({ isOpen, onClose }) {
           {/* Price and Discounted Price */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Price *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Price *
+              </label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₹</span>
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                  ₹
+                </span>
                 <input
                   type="number"
                   name="price"
@@ -205,9 +226,13 @@ export default function AddProductModal({ isOpen, onClose }) {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Discounted Price</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Discounted Price
+              </label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₹</span>
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                  ₹
+                </span>
                 <input
                   type="number"
                   name="discountedPrice"
@@ -223,10 +248,12 @@ export default function AddProductModal({ isOpen, onClose }) {
           </div>
 
           {/* Category */}
-         
- {/* Category */}
- <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+
+          {/* Category */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Category *
+            </label>
             <select
               name="category"
               value={formData.category}
@@ -245,7 +272,9 @@ export default function AddProductModal({ isOpen, onClose }) {
 
           {/* Stock */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Stock *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Stock *
+            </label>
             <input
               type="number"
               name="stock"
@@ -260,7 +289,9 @@ export default function AddProductModal({ isOpen, onClose }) {
 
           {/* Measurement - Fixed typo from measurment to measurement */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Measurement</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Measurement
+            </label>
             <input
               type="text"
               name="measurement"
@@ -273,7 +304,9 @@ export default function AddProductModal({ isOpen, onClose }) {
 
           {/* Status */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Status
+            </label>
             <select
               name="status"
               value={formData.status}
@@ -288,7 +321,9 @@ export default function AddProductModal({ isOpen, onClose }) {
           {/* Specifications */}
           <div>
             <div className="flex justify-between items-center mb-2">
-              <label className="block text-sm font-medium text-gray-700">Specifications</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Specifications
+              </label>
               <button
                 type="button"
                 onClick={addSpecification}
@@ -297,7 +332,7 @@ export default function AddProductModal({ isOpen, onClose }) {
                 + Add Specification
               </button>
             </div>
-            
+
             {formData.specifications.map((spec, index) => (
               <div key={index} className="flex items-center space-x-2 mb-2">
                 <input
@@ -331,8 +366,10 @@ export default function AddProductModal({ isOpen, onClose }) {
 
           {/* Images Upload */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Product Images</label>
-            
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Product Images
+            </label>
+
             {/* Image Previews */}
             {previewImages.length > 0 && (
               <div className="grid grid-cols-3 gap-2 mb-4">
@@ -354,7 +391,7 @@ export default function AddProductModal({ isOpen, onClose }) {
                 ))}
               </div>
             )}
-            
+
             {/* Upload Area */}
             <div
               onClick={() => fileInputRef.current?.click()}
@@ -362,8 +399,11 @@ export default function AddProductModal({ isOpen, onClose }) {
             >
               <FiUpload className="w-8 h-8 mb-2 text-gray-400" />
               <p className="text-sm text-gray-500 text-center">
-                Click to upload or drag and drop<br />
-                <span className="text-xs text-gray-400">PNG, JPG up to 5MB</span>
+                Click to upload or drag and drop
+                <br />
+                <span className="text-xs text-gray-400">
+                  PNG, JPG up to 5MB
+                </span>
               </p>
               <input
                 ref={fileInputRef}
@@ -390,16 +430,17 @@ export default function AddProductModal({ isOpen, onClose }) {
             Cancel
           </button>
           <button
+
             type="submit"
             onClick={handleSubmit}
-            disabled={!isFormValid}
+            disabled={!isFormValid || loading}
             className={`px-4 py-2.5 rounded-lg text-white transition-colors ${
               isFormValid 
                 ? "bg-indigo-600 hover:bg-indigo-700"
                 : "bg-indigo-400 cursor-not-allowed"
             }`}
           >
-            Add Product
+            {loading ? <Loading_svg /> : "Add Product"}
           </button>
         </div>
       </div>

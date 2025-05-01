@@ -3,11 +3,15 @@ import { FiX, FiUpload, FiImage } from "react-icons/fi";
 import { Post_category } from "../../../controllers/Network/Featcher";
 import { useDispatch, useSelector } from "react-redux";
 import { set_Category } from "../../../store/counterSlice";
+import Loading_svg from "../../../components/Loading_svg";
 
 export default function AddCategoryModal({ isOpen, onClose }) {
   const dispacher = useDispatch();
   const Categoryredux = useSelector((state) => state.counter.Category);
 
+
+  const [loading, setloading] = useState(false);
+  const [errormsh, seterrormsh] = useState(null)
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -37,7 +41,8 @@ export default function AddCategoryModal({ isOpen, onClose }) {
   };
 
   const handleSubmit = (e) => {
-    e.preventDefault();
+    e.preventDefault();  setloading(true);
+    seterrormsh(null)
     const { previewImage, ...submitData } = formData;
     // onSubmit(submitData);
 
@@ -52,10 +57,16 @@ export default function AddCategoryModal({ isOpen, onClose }) {
       .then((res) => {
         console.log(res.data);
         dispacher(set_Category([res.data.category,...Categoryredux ]));
-        onClose();
+        if(res.data.success){
+
+          setloading(false);
+          onClose()
+        }
       })
       .catch((err) => {
         console.log(err);
+        setloading(false);
+        seterrormsh("Opps, Something went Wrong.")
       });
   };
 
@@ -76,7 +87,7 @@ export default function AddCategoryModal({ isOpen, onClose }) {
         {/* Modal Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-800">
-            Add New Category
+            Add New Category{errormsh&&<p className="text-sm">{errormsh}</p>}
           </h2>
           <button
             onClick={() => {
@@ -187,9 +198,9 @@ export default function AddCategoryModal({ isOpen, onClose }) {
             <button
               type="submit"
               className="px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
-              disabled={!formData.name}
+              disabled={!formData.name || loading}
             >
-              Add Category
+             {loading ? <Loading_svg /> : "Add Category"}
             </button>
           </div>
         </form>

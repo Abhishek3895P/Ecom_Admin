@@ -1,6 +1,7 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { FiX } from "react-icons/fi";
 import { post_recomended } from "../../../controllers/Network/Featcher";
+import Loading_svg from "../../../components/Loading_svg";
 // import your network function for adding recommendation
 // import { Post_recommended } from '../../../controllers/Network/Featcher';
 
@@ -8,8 +9,12 @@ export default function AddRecomendedModel({ isOpen, onClose }) {
   if (!isOpen) return null;
   const idRef = useRef(null);
 
+  const [loading, setloading] = useState(false);
+  const [errormsh, seterrormsh] = useState(null);
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setloading(true);
+    seterrormsh(null);
     const productId = idRef.current.value.trim();
     if (!productId) return;
 
@@ -17,9 +22,15 @@ export default function AddRecomendedModel({ isOpen, onClose }) {
       post_recomended({ ID: productId })
         .then((res) => {
           console.log(res);
+          if (res.data.success) {
+            setloading(false);
+            onClose();
+          }
         })
         .catch((err) => {
           console.log(err);
+          setloading(false);
+          seterrormsh("Opps, Something went Wrong.");
         });
 
       onClose();
@@ -39,7 +50,7 @@ export default function AddRecomendedModel({ isOpen, onClose }) {
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-800">
-            Add Recommended
+            Add Recommended{errormsh && <p className="text-sm">{errormsh}</p>}
           </h2>
           <button
             onClick={handleCancel}
@@ -79,10 +90,11 @@ export default function AddRecomendedModel({ isOpen, onClose }) {
               Cancel
             </button>
             <button
+              disabled={loading}
               type="submit"
               className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
             >
-              Submit
+              {loading ? <Loading_svg /> : "Submit"}
             </button>
           </div>
         </form>
